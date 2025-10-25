@@ -57,7 +57,55 @@ app.listen(3000, () => {
 
 ## 🌐 Publicar en Internet (Para Entrenamiento en Equipo)
 
-### Opción A: GitHub Pages (Gratis ⭐ Recomendado)
+### Opción A: Cloudflare Pages (⭐⭐ Súper Recomendado)
+
+**[📖 Guía completa de deployment en Cloudflare](../CLOUDFLARE-DEPLOYMENT.md)**
+
+**¿Por qué Cloudflare Pages?**
+- ✅ CDN global ultra rápido
+- ✅ SSL automático (HTTPS)
+- ✅ Dominios personalizados gratis
+- ✅ Builds automáticos desde GitHub
+- ✅ Hosting ilimitado
+
+**Pasos rápidos:**
+
+1. **Ve a Cloudflare Pages:**
+   - Abre [dash.cloudflare.com](https://dash.cloudflare.com)
+   - Crea cuenta gratis (solo email, sin tarjeta)
+   
+2. **Conecta GitHub:**
+   - Click en **"Pages"** → **"Create a project"**
+   - Selecciona **"Connect to Git"**
+   - Conecta el repo: `Valtrido88/RADIO-SIMULADOR`
+
+3. **Configura el build:**
+   ```
+   Project name: radio-simulador-medevac
+   Production branch: main
+   Build command: (vacío)
+   Build output directory: web
+   ```
+
+4. **Deploy:**
+   - Click en **"Save and Deploy"**
+   - Espera 1-2 minutos
+   - ¡Listo! Tu simulador estará en:
+     ```
+     https://radio-simulador-medevac.pages.dev
+     ```
+
+5. **Dominio personalizado (opcional):**
+   - Si quieres `www.medevacsimulator.es` o similar
+   - Ve a **Custom domains** en tu proyecto
+   - Agrega tu dominio
+   - Cloudflare lo configura automáticamente
+
+**Ver [guía completa con screenshots](../CLOUDFLARE-DEPLOYMENT.md)**
+
+---
+
+### Opción B: GitHub Pages (Gratis ⭐ Clásico)
 
 1. **Sube a GitHub:**
    ```bash
@@ -81,7 +129,7 @@ app.listen(3000, () => {
    https://Valtrido88.github.io/RADIO-SIMULADOR/web/
    ```
 
-### Opción B: Vercel (Gratis)
+### Opción C: Vercel (Gratis)
 
 1. **Conecta tu repo a Vercel:**
    - Ve a [vercel.com](https://vercel.com)
@@ -98,7 +146,7 @@ app.listen(3000, () => {
    }
    ```
 
-### Opción C: Netlify (Gratis)
+### Opción D: Netlify (Gratis)
 
 1. **Conecta tu repo:**
    - Ve a [netlify.com](https://netlify.com)
@@ -113,7 +161,7 @@ app.listen(3000, () => {
    https://tu-sitio-random.netlify.app
    ```
 
-### Opción D: Replit (Gratis, Fácil)
+### Opción E: Replit (Gratis, Fácil)
 
 1. **Ve a [replit.com](https://replit.com)**
 2. **Crea nuevo REPL → "Import from GitHub"**
