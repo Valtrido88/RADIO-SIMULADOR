@@ -1,6 +1,9 @@
 # 📻 RADIO-SIMULADOR
 Simulador Interactivo de Radio MEDEVAC para Entrenamiento en Comunicaciones
 
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-F38020?style=flat&logo=cloudflare)](./CLOUDFLARE-DEPLOYMENT.md)
+[![Deploy to GitHub Pages](https://img.shields.io/badge/Deploy%20to-GitHub%20Pages-181717?style=flat&logo=github)](https://github.com/Valtrido88/RADIO-SIMULADOR/settings/pages)
+
 ## 🎯 ¿Qué es?
 
 Un **simulador web educativo** realista pero simple para entrenar a equipos en comunicaciones por radio MEDEVAC. Sin instalación requerida, funciona en cualquier navegador moderno.
@@ -10,6 +13,11 @@ Un **simulador web educativo** realista pero simple para entrenar a equipos en c
 ### 👉 **[Abre el Simulador Aquí](./web/index.html)** ← Haz clic para empezar
 
 O descarga el repositorio y abre `/web/index.html` en tu navegador.
+
+### 🌐 Deployment Online
+- **Cloudflare Pages** (recomendado): [Guía completa](./CLOUDFLARE-DEPLOYMENT.md) | [Quick Start](./QUICK-START-CLOUDFLARE.md)
+- **GitHub Pages**: Configuración automática incluida
+- **Dominio personalizado**: Soporta `www.medevacsimulator.es` u otros (ver guía)
 
 ## ✨ Características
 

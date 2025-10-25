@@ -1,0 +1,35 @@
+# Node modules (if using any build tools in future)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.log
+.temp/
+tmp/
+
+# Cloudflare
+.wrangler/
+wrangler.toml.local
+
+# Environment variables
+.env
+.env.local
+.env.*.local
