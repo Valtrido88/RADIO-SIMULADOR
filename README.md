@@ -1,6 +1,9 @@
 # 📻 RADIO-SIMULADOR
 Simulador Interactivo de Radio MEDEVAC para Entrenamiento en Comunicaciones
 
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-F38020?style=flat&logo=cloudflare)](./CLOUDFLARE-DEPLOYMENT.md)
+[![Deploy to GitHub Pages](https://img.shields.io/badge/Deploy%20to-GitHub%20Pages-181717?style=flat&logo=github)](https://github.com/Valtrido88/RADIO-SIMULADOR/settings/pages)
+
 ## 🎯 ¿Qué es?
 
 Un **simulador web educativo** realista pero simple para entrenar a equipos en comunicaciones por radio MEDEVAC. Sin instalación requerida, funciona en cualquier navegador moderno.
@@ -10,6 +13,11 @@ Un **simulador web educativo** realista pero simple para entrenar a equipos en c
 ### 👉 **[Abre el Simulador Aquí](./web/index.html)** ← Haz clic para empezar
 
 O descarga el repositorio y abre `/web/index.html` en tu navegador.
+
+### 🌐 Deployment Online
+- **Cloudflare Pages** (recomendado): [Guía completa](./CLOUDFLARE-DEPLOYMENT.md) | [Quick Start](./QUICK-START-CLOUDFLARE.md)
+- **GitHub Pages**: Configuración automática incluida
+- **Dominio personalizado**: Soporta `www.medevacsimulator.es` u otros (ver guía)
 
 ## ✨ Características
 
@@ -56,7 +64,18 @@ RADIO-SIMULADOR/
 
 ## 🌐 Publicar para Entrenamiento en Equipo
 
-### Opción 1: GitHub Pages (Recomendado 🎯)
+### Opción 1: Cloudflare Pages (⭐ Recomendado - Más Rápido)
+**[📖 Guía completa de deployment en Cloudflare](./CLOUDFLARE-DEPLOYMENT.md)**
+
+Tu equipo accede desde: `https://radio-simulador-medevac.pages.dev`
+
+1. Ve a [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Pages → Create project → Connect GitHub
+3. Selecciona: `Valtrido88/RADIO-SIMULADOR`
+4. Build output: `web`
+5. ¡Listo! + **Gratis + CDN Global + SSL automático**
+
+### Opción 2: GitHub Pages
 Tu equipo accede desde: `https://Valtrido88.github.io/RADIO-SIMULADOR/web/`
 
 1. Sube cambios a GitHub
@@ -64,7 +83,7 @@ Tu equipo accede desde: `https://Valtrido88.github.io/RADIO-SIMULADOR/web/`
 3. Selecciona `main branch → /web folder`
 4. ¡Listo!
 
-### Opción 2: Vercel / Netlify / Replit
+### Opción 3: Vercel / Netlify / Replit
 Ver guía completa en `/web/README.md`
 
 ## 💻 Ejecutar Localmente
