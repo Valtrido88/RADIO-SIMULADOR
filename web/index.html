@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Radio MEDEVAC - Entrenamiento</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚁 Simulador de Radio MEDEVAC</h1>
+            <p class="subtitle">Entrenamiento en Comunicaciones por Radio</p>
+        </header>
+
+        <main class="radio-simulator">
+            <!-- Panel de Control Principal -->
+            <section class="control-panel">
+                <div class="panel-header">
+                    <h2>Transceptor UHF/VHF</h2>
+                    <div class="power-indicator">
+                        <span class="led" id="powerLed"></span>
+                        <span id="powerStatus">Apagado</span>
+                    </div>
+                </div>
+
+                <!-- Encendido/Apagado -->
+                <div class="control-group">
+                    <label for="powerToggle">Encendido</label>
+                    <input type="checkbox" id="powerToggle" class="toggle-switch">
+                </div>
+
+                <!-- Selector de Banda -->
+                <div class="control-group">
+                    <label for="bandSelect">Banda:</label>
+                    <select id="bandSelect">
+                        <option value="uhf">UHF (300-400 MHz)</option>
+                        <option value="vhf">VHF (118-137 MHz)</option>
+                        <option value="mil">Militar (225-400 MHz)</option>
+                    </select>
+                </div>
+
+                <!-- Frecuencia Principal -->
+                <div class="frequency-display">
+                    <div class="freq-label">FRECUENCIA</div>
+                    <div class="freq-value" id="frequencyDisplay">121.500</div>
+                    <div class="freq-unit">MHz</div>
+                </div>
+
+                <!-- Controles de Frecuencia -->
+                <div class="frequency-controls">
+                    <button id="freqDown" class="btn-freq">−</button>
+                    <input type="number" id="frequencyInput" min="100" max="400" step="0.025" value="121.500">
+                    <button id="freqUp" class="btn-freq">+</button>
+                </div>
+
+                <!-- Canales Preestablecidos -->
+                <div class="presets">
+                    <label>Canales Preestablecidos:</label>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" data-freq="121.500">Emergencia</button>
+                        <button class="preset-btn" data-freq="118.100">Tráfico</button>
+                        <button class="preset-btn" data-freq="122.750">Unicom</button>
+                        <button class="preset-btn" data-freq="124.000">Médico</button>
+                    </div>
+                </div>
+
+                <!-- Controles de Audio -->
+                <div class="audio-controls">
+                    <div class="control-group">
+                        <label for="volumeSlider">Volumen</label>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="60">
+                        <span id="volumeValue">60</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="squelchSlider">Squelch</label>
+                        <input type="range" id="squelchSlider" min="0" max="10" value="3">
+                        <span id="squelchValue">3</span>
+                    </div>
+                </div>
+
+                <!-- Medidor de Señal -->
+                <div class="signal-meter">
+                    <label>Intensidad de Señal</label>
+                    <div class="meter-container">
+                        <div class="meter-bar" id="signalMeter"></div>
+                    </div>
+                    <div class="meter-scale">
+                        <span>0</span>
+                        <span>S5</span>
+                        <span>S9</span>
+                    </div>
+                </div>
+
+                <!-- Indicadores de Estado -->
+                <div class="status-indicators">
+                    <div class="indicator">
+                        <span class="led" id="rxLed"></span>
+                        <span>RX (Recibiendo)</span>
+                    </div>
+                    <div class="indicator">
+                        <span class="led" id="txLed"></span>
+                        <span>TX (Transmitiendo)</span>
+                    </div>
+                    <div class="indicator">
+                        <span class="led" id="squelchLed"></span>
+                        <span>Squelch Activo</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de Transmisión -->
+            <section class="transmission-panel">
+                <div class="panel-header">
+                    <h3>Protocolo de Transmisión</h3>
+                </div>
+
+                <div class="ptt-section">
+                    <label for="messageInput">Mensaje:</label>
+                    <textarea id="messageInput" placeholder="Ej: Base, Helicóptero Uno con paciente crítico. Requerimos despeje en heliport. Cambio."></textarea>
+
+                    <div class="message-guidelines">
+                        <strong>📋 Protocolo MEDEVAC:</strong>
+                        <ul>
+                            <li>Saludar: Identifícate primero</li>
+                            <li>Mensaje: Sé claro y conciso</li>
+                            <li>Finalizar: Siempre di "Cambio" o "Corto"</li>
+                            <li>Confirmación: Espera "Cambio" de retorno</li>
+                        </ul>
+                    </div>
+
+                    <div class="ptt-button-container">
+                        <button id="pttButton" class="ptt-button">
+                            <span class="ptt-inner">PRESIONAR PARA TRANSMITIR</span>
+                        </button>
+                    </div>
+
+                    <div class="transmission-info" id="transmissionInfo"></div>
+                </div>
+            </section>
+
+            <!-- Panel de Historial -->
+            <section class="history-panel">
+                <div class="panel-header">
+                    <h3>Historial de Comunicaciones</h3>
+                    <button id="clearHistory" class="btn-small">Limpiar</button>
+                </div>
+
+                <div class="history-container" id="historyContainer">
+                    <div class="history-placeholder">El historial aparecerá aquí...</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Panel de Ayuda -->
+        <footer class="help-panel">
+            <details>
+                <summary>❓ Ayuda y Tutorial</summary>
+                <div class="help-content">
+                    <h4>Cómo usar el Simulador:</h4>
+                    <ol>
+                        <li><strong>Enciende la radio:</strong> Marca el checkbox "Encendido"</li>
+                        <li><strong>Selecciona banda:</strong> Elige UHF, VHF o Militar</li>
+                        <li><strong>Ajusta frecuencia:</strong> Usa los botones ± o escribe directamente</li>
+                        <li><strong>Prueba presets:</strong> Haz clic en "Emergencia", "Tráfico", etc.</li>
+                        <li><strong>Transmite:</strong> Escribe tu mensaje y presiona el botón PTT (o mantén clic)</li>
+                        <li><strong>Observa historial:</strong> Todas tus transmisiones se registran</li>
+                    </ol>
+
+                    <h4>Protocolos Reales:</h4>
+                    <p><strong>Identifícate:</strong> "Base, aquí Helicóptero Uno"</p>
+                    <p><strong>Transmisión:</strong> Mantén breve (máx 10-15 segundos)</p>
+                    <p><strong>Fin de transmisión:</strong> Di "Cambio" (esperas respuesta) o "Corto" (no esperas)</p>
+                    <p><strong>Emergencia:</strong> Frecuencia 121.500 MHz es de emergencia internacional</p>
+
+                    <h4>Bandas de Frecuencia:</h4>
+                    <ul>
+                        <li><strong>UHF:</strong> Alcance corto-medio, bueno para corta distancia</li>
+                        <li><strong>VHF:</strong> Aviación, alcance medio-largo, frecuencia 121.5 es emergencia</li>
+                        <li><strong>Militar:</strong> Rango extendido, uso específico</li>
+                    </ul>
+
+                    <h4>Indicadores:</h4>
+                    <ul>
+                        <li><strong>LED Verde:</strong> Función activa o en espera</li>
+                        <li><strong>LED Rojo:</strong> Transmitiendo</li>
+                        <li><strong>LED Naranja:</strong> Recibiendo o alerta</li>
+                    </ul>
+                </div>
+            </details>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
