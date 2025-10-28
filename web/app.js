@@ -141,11 +141,20 @@ function saveApiKey() {
 function loadSavedVoiceId() {
     try {
         const saved = localStorage.getItem('elevenCustomVoiceId') || '';
-        radioState.customVoiceId = saved;
-        if (elements.elevenCustomVoiceId) elements.elevenCustomVoiceId.value = saved;
-        if (saved && elements.voiceIdStatus) {
-            elements.voiceIdStatus.textContent = '✓ Guardado';
-            elements.voiceIdStatus.style.color = '#4CAF50';
+        if (saved) {
+            radioState.customVoiceId = saved;
+            if (elements.elevenCustomVoiceId) elements.elevenCustomVoiceId.value = saved;
+            if (elements.voiceIdStatus) {
+                elements.voiceIdStatus.textContent = '✓ Guardado';
+                elements.voiceIdStatus.style.color = '#4CAF50';
+            }
+        } else {
+            // Mantener el valor por defecto hardcodeado y reflejarlo en la UI
+            if (elements.elevenCustomVoiceId) elements.elevenCustomVoiceId.value = radioState.customVoiceId || '';
+            if (radioState.customVoiceId && elements.voiceIdStatus) {
+                elements.voiceIdStatus.textContent = 'Usando Voice ID por defecto';
+                elements.voiceIdStatus.style.color = '#4CAF50';
+            }
         }
     } catch (e) {
         console.warn('No se pudo cargar el Voice ID');
@@ -887,11 +896,11 @@ async function speakWithElevenLabs(text) {
                 },
                 body: JSON.stringify({
                     text: text,
-                    model_id: 'eleven_monolingual_v1',
+                    model_id: 'eleven_multilingual_v2',
                     voice_settings: {
-                        stability: 0.5,
-                        similarity_boost: 0.75,
-                        style: 0.0,
+                        stability: 0.4,
+                        similarity_boost: 0.8,
+                        style: 0.1,
                         use_speaker_boost: true
                     }
                 })
