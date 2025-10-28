@@ -360,7 +360,7 @@ Reglas:
 
     // Si hay API key en el cliente, usar llamada directa (desarrollo). Si no, usar el endpoint backend /api/generate-scenario
     if (!radioState.geminiApiKey) {
-        const backendRes = await fetch('/api/generate-scenario', {
+    const backendRes = await apiFetch('/api/generate-scenario', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -453,7 +453,7 @@ async function checkBackendHealth() {
     el.textContent = 'Backend: comprobando…';
     el.classList.remove('status-ok','status-warn','status-error');
     try {
-        const res = await fetch('/api/health', { method: 'GET' });
+    const res = await apiFetch('/api/health', { method: 'GET' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const h = await res.json();
         const hasGemini = !!(h?.services?.gemini);
@@ -789,7 +789,7 @@ async function speakWithElevenLabs(text) {
         // Si no hay API key local, usar backend de producción
         let response;
         if (!ELEVENLABS_CONFIG.apiKey) {
-            response = await fetch('/api/tts', {
+            response = await apiFetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, voiceGender: radioState.voiceGender })
@@ -1357,6 +1357,42 @@ function renderCasualtyCard(c) {
     </div>`;
 }
 
+function renderBodyRegions(injuries) {
+    const regions = ['Cabeza','Cuello','Tórax','Abdomen','Pelvis','Brazo Izq','Brazo Der','Pierna Izq','Pierna Der'];
+    const hurt = new Set(injuries.map(i=>i.region));
+    return `
+        <div class="diagram-grid">
+            ${regions.map(r => `<div class="region ${hurt.has(r)?'hurt':''}" title="${r}">${r}</div>`).join('')}
+        </div>
+    `;
+}
+
+function buildCasualtyCardText(c, s) {
+    return (
+`Herido ${c.id} — ${c.category} · ${c.precedence} · ${c.type}\n`+
+`Lesiones: ${c.injuries.map(i=>`${i.region} (${i.severity})`).join('; ')}\n`+
+`Vía aérea: ${c.airway} | Resp: ${c.breathing} | Circ: ${c.circulation} | Sangrado: ${c.bleeding} | Consciente: ${c.conscious}\n`+
+`Signos vitales: FC ${c.vitals.hr} lpm | SpO2 ${c.vitals.spo2}% | TA ${c.vitals.bp} mmHg | FR ${c.vitals.rr} rpm\n`+
+`Ubicación: ${s.line1_location}\n`+
+`Frecuencia/Indicativo: ${s.line2_freq_callsign}`);
+}
+
+// Construir mensaje procedimental breve para radio a partir del escenario
+function buildProceduralRadioFromScenario(s) {
+    const locShort = s.line1_location.split(' - ')[0];
+    const parts = [];
+    const toWhom = s.receiverRole || 'Base';
+    const fromWho = s.emitterRole || 'Helo Uno';
+    parts.push(`${toWhom}, aquí ${fromWho} en ${locShort}.`);
+    parts.push(`Solicito MEDEVAC: URG ${s.line3_precedence.URG}, PRI ${s.line3_precedence.PRI}, RUT ${s.line3_precedence.RUT}.`);
+    parts.push(`Pacientes: Camilla ${s.line5_type.Camilla}, Ambulatorio ${s.line5_type.Ambulatorio}.`);
+    if (s.line4_equipment && s.line4_equipment !== 'Ninguno') {
+        parts.push(`Equipo requerido: ${s.line4_equipment}.`);
+    }
+    parts.push(`Señalización ${s.line7_marking}. Seguridad: ${s.line6_security}.`);
+    parts.push('Cambio.');
+    return parts.join(' ');
+}
 function renderBodyRegions(injuries) {
     const regions = ['Cabeza','Cuello','Tórax','Abdomen','Pelvis','Brazo Izq','Brazo Der','Pierna Izq','Pierna Der'];
     const hurt = new Set(injuries.map(i=>i.region));

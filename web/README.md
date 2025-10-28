@@ -127,13 +127,39 @@ app.listen(3000, () => {
 
 ---
 
-## 📋 Características del Simulador
+## � Backend IA + TTS (Cloudflare Worker)
+
+El proyecto incluye un Worker con tres endpoints:
+
+- `POST /api/generate-scenario`: genera escenarios usando Google Gemini.
+- `POST /api/tts`: sintetiza voz usando Eleven Labs.
+- `GET /api/health`: informa si el backend tiene secrets configuradas.
+
+Secrets necesarias en el Worker:
+- `GEMINI_API_KEY`
+- `ELEVENLABS_API_KEY`
+
+Publicación:
+```bash
+wrangler secret put GEMINI_API_KEY
+wrangler secret put ELEVENLABS_API_KEY
+wrangler publish
+```
+
+Uso desde el Frontend:
+- Si la UI y el Worker están en el mismo dominio, no debes hacer nada (usa rutas relativas `/api/...`).
+- Si están en dominios distintos, en la UI configura “Backend URL” (ej: `https://tu-worker.workers.dev`).
+- En la cabecera verás un indicador: Backend OK / Parcial / No configurado.
+
+---
+
+## �📋 Características del Simulador
 
 ### 🎛️ Controles Principales
 - **Encendido/Apagado:** Toggle para activar la radio
 - **Selector de Banda:** UHF, VHF, Militar
 - **Frecuencia Ajustable:** Botones ±, input directo o presets
-- **Canales Preestablecidos:** Emergencia (121.5), Tráfico, Unicom, Médico
+- **Canales Preestablecidos:** Emergencia (121.5), Torre Control (118.1), SAR Militar (243.0), MEDEVAC (124.0)
 - **Volumen:** Control deslizante 0-100
 - **Squelch:** Silencio automático 0-10
 
@@ -149,6 +175,8 @@ app.listen(3000, () => {
 - **Botón PTT:** Presiona para transmitir (botón rojo grande)
 - **Historial:** Todas las comunicaciones se registran con timestamp
 - **Respuestas Simuladas:** La "base" responde automáticamente
+- **IA (Gemini):** Genera escenarios MEDEVAC realistas por dificultad
+- **TTS (Eleven Labs):** Voces realistas por backend (sin exponer API keys)
 
 ### 📖 Protocolos Incluidos
 - Instrucciones de comunicación MEDEVAC
@@ -206,6 +234,11 @@ web/
 ├── style.css        # Estilos (diseño realista)
 ├── app.js           # Lógica (interacción + simulación)
 └── README.md        # Esta documentación
+
+Raíz/
+├── worker.js        # Backend Cloudflare Worker (/api/*)
+├── wrangler.toml    # Configuración del Worker
+└── .github/workflows/deploy-worker.yml # CI/CD (opcional)
 ```
 
 **Tamaño Total:** ~50 KB (muy ligero, carga al instante)
@@ -223,12 +256,19 @@ web/
 - El sonido de beep es opcional, el simulador funciona sin él
 - Algunos navegadores requieren interacción antes de reproducir audio
 - Intenta hacer clic primero en la página
+- Si el backend no está publicado o sin secret ELEVENLABS_API_KEY, se usará TTS del navegador como fallback
 
 ### "Los presets no sintonizaban"
 - Asegúrate de que la radio esté encendida
 - Verifica que el preset esté dentro del rango de la banda actual
 
 ### "¿Cómo lo hago móvil-friendly?"
+-
+### "El backend marca error"
+- Revisa el indicador de estado en la cabecera
+- Comprueba `/api/health` en tu dominio de Worker
+- Verifica que configuraste `GEMINI_API_KEY` y `ELEVENLABS_API_KEY`
+- Si sirves UI local, usa “Backend URL” para apuntar al Worker
 - Ya es responsive (funciona en phone)
 - El botón PTT se puede usar con toque
 - Interfaz adapta a pantalla pequeña
@@ -246,9 +286,9 @@ Para problemas o mejoras:
 
 ## 📝 Versión
 
-**Simulador de Radio MEDEVAC v1.0**
-- HTML5 + CSS3 + Vanilla JavaScript
-- Sin dependencias externas
+**Simulador de Radio MEDEVAC v1.1**
+- HTML5 + CSS3 + Vanilla JavaScript + Cloudflare Worker
+- Frontend sin dependencias externas; backend consume APIs de IA y TTS
 - Compatible: Chrome, Firefox, Safari, Edge (últimas versiones)
 - Responsive: Desktop, Tablet, Mobile
 

@@ -67,6 +67,20 @@ Tu equipo accede desde: `https://Valtrido88.github.io/RADIO-SIMULADOR/web/`
 ### Opción 2: Vercel / Netlify / Replit
 Ver guía completa en `/web/README.md`
 
+### Opción 3: Cloudflare Workers (Backend IA + TTS)
+Este proyecto incluye un Worker que expone:
+- `POST /api/generate-scenario` (Gemini)
+- `POST /api/tts` (Eleven Labs)
+- `GET /api/health`
+
+Pasos:
+1) Configura secrets en el Worker (una sola vez):
+   - `GEMINI_API_KEY`
+   - `ELEVENLABS_API_KEY`
+2) Publica el Worker:
+   - `wrangler publish`
+3) En la UI, verifica el estado en la cabecera y, si tu UI y Worker están en dominios distintos, configura la “Backend URL”.
+
 ## 💻 Ejecutar Localmente
 
 ```bash
@@ -76,6 +90,11 @@ python3 -m http.server 8000
 # Accede a http://localhost:8000
 
 # O simplemente abre index.html en tu navegador
+
+Si quieres usar el backend remoto (Worker) desde local:
+- Abre `web/index.html`
+- En “Escenarios MEDEVAC”, establece “Backend URL” con la URL del Worker (ej: https://tu-worker.workers.dev)
+- El indicador en la cabecera mostrará el estado del backend.
 ```
 
 ## 📚 Protocolos Incluidos
@@ -98,8 +117,8 @@ python3 -m http.server 8000
 
 ## 🛠️ Características Técnicas
 
-- **Stack:** HTML5 + CSS3 + Vanilla JavaScript
-- **Dependencias:** Ninguna (0 librerías externas)
+- **Stack:** HTML5 + CSS3 + Vanilla JavaScript + Cloudflare Worker (backend opcional)
+- **Dependencias:** Frontend sin dependencias; backend llama a APIs de Gemini/ElevenLabs
 - **Tamaño:** ~50 KB total
 - **Navegadores:** Chrome, Firefox, Safari, Edge (últimas versiones)
 - **Responsive:** Funciona en cualquier resolución
@@ -121,7 +140,7 @@ Abre el simulador y haz clic en **"❓ Ayuda y Tutorial"** para:
 
 ---
 
-**Versión:** 1.0  
+**Versión:** 1.1  
 **Autor:** Proyecto RADIO-SIMULADOR  
 **Licencia:** MIT (libre de usar)  
 
