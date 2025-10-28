@@ -22,7 +22,12 @@ const radioState = {
     isListening: false,
     currentScenario: null,
     emitterRole: 'Helo Uno',
-    receiverRole: 'Base'
+    receiverRole: 'Base',
+    // Gemini
+    useGemini: true,
+    // La API key fue proporcionada por el usuario y se integra aquí (se guardará también en localStorage al cargar)
+    geminiApiKey: 'AIzaSyByewrdQbkA7wolYVISvUQzfyqwa5Tk67M',
+    geminiDifficulty: 'intermedio'
 };
 
 // Referencias a elementos del DOM
@@ -62,7 +67,13 @@ const elements = {
     loadProceduralToMsg: document.getElementById('loadProceduralToMsg'),
     scenarioContainer: document.getElementById('scenarioContainer'),
     emitterRole: document.getElementById('emitterRole'),
-    receiverRole: document.getElementById('receiverRole')
+    receiverRole: document.getElementById('receiverRole'),
+    // Gemini
+    useGemini: document.getElementById('useGemini'),
+    geminiApiKey: document.getElementById('geminiApiKey'),
+    saveGeminiKey: document.getElementById('saveGeminiKey'),
+    geminiKeyStatus: document.getElementById('geminiKeyStatus'),
+    geminiDifficulty: document.getElementById('geminiDifficulty')
 };
 
 // Inicialización
@@ -70,6 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateDisplay();
     loadSavedApiKey();
+    loadSavedGeminiKey();
+    // Si hay una API key integrada en el estado (por ejemplo, proporcionada por el usuario), asegurar que se guarde en localStorage
+    try {
+        if (radioState.geminiApiKey && radioState.geminiApiKey.length > 10) {
+            localStorage.setItem('geminiApiKey', radioState.geminiApiKey);
+            localStorage.setItem('useGemini', String(radioState.useGemini));
+            if (elements.geminiApiKey) elements.geminiApiKey.value = radioState.geminiApiKey;
+            if (elements.useGemini) elements.useGemini.checked = radioState.useGemini;
+            if (elements.geminiKeyStatus) {
+                elements.geminiKeyStatus.textContent = '✓ Guardada';
+                elements.geminiKeyStatus.style.color = '#4CAF50';
+            }
+        }
+    } catch (e) {
+        console.warn('No se pudo persistir la API key de Gemini en localStorage');
+    }
     
     // Verificar si hay API key de Eleven Labs configurada
     if (ELEVENLABS_CONFIG.apiKey && ELEVENLABS_CONFIG.apiKey.length > 0) {
@@ -112,6 +139,47 @@ function saveApiKey() {
     
     addToHistory('SISTEMA', 'Eleven Labs activado. Las voces ahora serán ultra realistas.', 'system');
 }
+// Cargar API key de Gemini guardada
+function loadSavedGeminiKey() {
+    try {
+        const savedKey = localStorage.getItem('geminiApiKey');
+        const useGemini = localStorage.getItem('useGemini') === 'true';
+        const diff = localStorage.getItem('geminiDifficulty') || 'intermedio';
+        if (savedKey) {
+            radioState.geminiApiKey = savedKey;
+            if (elements.geminiApiKey) elements.geminiApiKey.value = savedKey;
+            if (elements.geminiKeyStatus) {
+                elements.geminiKeyStatus.textContent = '✓ Guardada';
+                elements.geminiKeyStatus.style.color = '#4CAF50';
+            }
+        }
+        radioState.useGemini = useGemini;
+        if (elements.useGemini) elements.useGemini.checked = useGemini;
+        radioState.geminiDifficulty = diff;
+        if (elements.geminiDifficulty) elements.geminiDifficulty.value = diff;
+    } catch (e) {
+        console.warn('No se pudo cargar la configuración de Gemini');
+    }
+}
+
+// Guardar API key de Gemini
+function saveGeminiKey() {
+    const apiKey = elements.geminiApiKey?.value?.trim();
+    if (!apiKey) {
+        if (elements.geminiKeyStatus) {
+            elements.geminiKeyStatus.textContent = '⚠ Ingresa una API key';
+            elements.geminiKeyStatus.style.color = '#ff9800';
+        }
+        return;
+    }
+    localStorage.setItem('geminiApiKey', apiKey);
+    radioState.geminiApiKey = apiKey;
+    if (elements.geminiKeyStatus) {
+        elements.geminiKeyStatus.textContent = '✓ API Key guardada';
+        elements.geminiKeyStatus.style.color = '#4CAF50';
+    }
+    addToHistory('SISTEMA', 'Gemini listo. Los escenarios podrán ser generados por IA.', 'system');
+}
 // Configurar listeners
 function setupEventListeners() {
     elements.powerToggle.addEventListener('change', handlePowerToggle);
@@ -124,6 +192,7 @@ function setupEventListeners() {
     elements.squelchSlider.addEventListener('input', handleSquelchChange);
     elements.voiceSelect.addEventListener('change', handleVoiceChange);
     elements.saveApiKey.addEventListener('click', saveApiKey);
+    if (elements.saveGeminiKey) elements.saveGeminiKey.addEventListener('click', saveGeminiKey);
     elements.presetButtons.forEach(btn => {
         btn.addEventListener('click', handlePresetClick);
     });
@@ -145,10 +214,26 @@ function setupEventListeners() {
     
     // Escenarios
     if (elements.generateScenario) {
-        elements.generateScenario.addEventListener('click', () => {
-            const scenario = generateMedevacScenario();
-            radioState.currentScenario = scenario;
-            renderScenario(scenario);
+        elements.generateScenario.addEventListener('click', async () => {
+            if (radioState.useGemini && radioState.geminiApiKey) {
+                addToHistory('SISTEMA', 'Generando caso con Gemini…', 'system');
+                try {
+                    const scenario = await generateScenarioWithGemini(radioState.geminiDifficulty);
+                    radioState.currentScenario = scenario;
+                    renderScenario(scenario);
+                    addToHistory('SISTEMA', 'Caso generado por IA (Gemini).', 'system');
+                } catch (err) {
+                    console.error(err);
+                    addToHistory('SISTEMA', 'Fallo al generar con Gemini. Usando generador local.', 'system');
+                    const scenario = generateMedevacScenario();
+                    radioState.currentScenario = scenario;
+                    renderScenario(scenario);
+                }
+            } else {
+                const scenario = generateMedevacScenario();
+                radioState.currentScenario = scenario;
+                renderScenario(scenario);
+            }
         });
     }
     // Selectores de roles
@@ -162,6 +247,19 @@ function setupEventListeners() {
         elements.receiverRole.addEventListener('change', (e) => {
             radioState.receiverRole = e.target.value;
             addToHistory('SISTEMA', `Receptor seleccionado: ${radioState.receiverRole}`, 'system');
+        });
+    }
+    if (elements.useGemini) {
+        elements.useGemini.addEventListener('change', (e) => {
+            radioState.useGemini = e.target.checked;
+            localStorage.setItem('useGemini', String(radioState.useGemini));
+            addToHistory('SISTEMA', radioState.useGemini ? 'Gemini activado para generación de casos.' : 'Gemini desactivado.', 'system');
+        });
+    }
+    if (elements.geminiDifficulty) {
+        elements.geminiDifficulty.addEventListener('change', (e) => {
+            radioState.geminiDifficulty = e.target.value;
+            localStorage.setItem('geminiDifficulty', radioState.geminiDifficulty);
         });
     }
     if (elements.copyNineLine) {
@@ -204,6 +302,146 @@ function setupEventListeners() {
             // Voces cargadas
         };
     }
+}
+
+// --- Gemini: Generación de escenarios ---
+async function generateScenarioWithGemini(difficulty = 'intermedio') {
+    const apiKey = radioState.geminiApiKey;
+    if (!apiKey) throw new Error('No hay API key de Gemini');
+
+    const difficultyMap = {
+        facil: 'fácil',
+        intermedio: 'intermedia',
+        dificil: 'difícil',
+        aleatorio: 'aleatoria'
+    };
+
+    const model = 'gemini-1.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const allowed = {
+        categories: ['Militar','Civil','EPW'],
+        precedences: ['URG','PRI','RUT'],
+        types: ['Camilla','Ambulatorio'],
+        regions: ['Cabeza','Cuello','Tórax','Abdomen','Pelvis','Brazo Izq','Brazo Der','Pierna Izq','Pierna Der'],
+        airway: ['Permeable','Comprometida'],
+        breathing: ['Adecuada','Dificultosa'],
+        circulation: ['Estable','Inestable'],
+        bleeding: ['Bajo','Moderado','Alto'],
+        conscious: ['Sí','No'],
+        equip: ['Ninguno','Guinche','Ventilador','Oxígeno'],
+        security: ['Sin enemigo','Enemigo posible','Enemigo confirmado'],
+        marking: ['Humo','Páneles','IR','Bengala'],
+        nbc: ['Ninguna','Q','B','R']
+    };
+
+    const prompt = `Eres un generador de escenarios MEDEVAC para entrenamiento de radio táctico en español.
+Debes crear un ÚNICO escenario con entre 1 y 4 bajas, adecuado a una dificultad ${difficultyMap[difficulty] || 'intermedia'}.
+RESPONDE EXCLUSIVAMENTE con un JSON válido, sin texto adicional.
+
+Estructura exacta esperada (usa estos nombres de campos y valores permitidos):
+{
+  "title": string,
+  "line1_location": string, // Ej: "LZ Bravo - Coordenadas 4.321, -74.123"
+  "line4_equipment": oneof ${JSON.stringify(allowed.equip)},
+  "line6_security": oneof ${JSON.stringify(allowed.security)},
+  "line7_marking": oneof ${JSON.stringify(allowed.marking)},
+  "line9_nbc": oneof ${JSON.stringify(allowed.nbc)},
+  "notes": string,
+  "casualties": [
+    {
+      "category": oneof ${JSON.stringify(allowed.categories)},
+      "precedence": oneof ${JSON.stringify(allowed.precedences)},
+      "type": oneof ${JSON.stringify(allowed.types)},
+      "injuries": [ { "region": oneof ${JSON.stringify(allowed.regions)}, "severity": oneof ["Leve","Moderada","Grave"] } ],
+      "airway": oneof ${JSON.stringify(allowed.airway)},
+      "breathing": oneof ${JSON.stringify(allowed.breathing)},
+      "circulation": oneof ${JSON.stringify(allowed.circulation)},
+      "bleeding": oneof ${JSON.stringify(allowed.bleeding)},
+      "conscious": oneof ${JSON.stringify(allowed.conscious)},
+      "vitals": { "hr": integer, "spo2": integer, "bp": string, "rr": integer }
+    }
+  ]
+}
+
+Reglas:
+- Valores sólo de las listas permitidas.
+- Incluye entre 1 y 3 lesiones por baja.
+- Los signos vitales deben ser coherentes con la precedencia: URG suele peor que PRI, y PRI peor que RUT.
+- No incluyas comentarios ni explicaciones fuera del JSON.`;
+
+    const body = {
+        contents: [ { role: 'user', parts: [ { text: prompt } ] } ],
+        generationConfig: { temperature: 0.9 }
+    };
+
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`Gemini error ${res.status}: ${t}`);
+    }
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const json = extractFirstJson(text);
+    const raw = JSON.parse(json);
+
+    // Normalizar/completar estructura
+    const casualties = (raw.casualties || []).map((c, idx) => ({
+        id: idx + 1,
+        category: c.category,
+        precedence: c.precedence,
+        type: c.type,
+        injuries: (c.injuries || []).map(i => ({ region: i.region, severity: i.severity })),
+        airway: c.airway,
+        breathing: c.breathing,
+        circulation: c.circulation,
+        bleeding: c.bleeding,
+        conscious: c.conscious,
+        vitals: c.vitals && typeof c.vitals === 'object' ? c.vitals : generateVitals(c.precedence || 'PRI')
+    }));
+
+    // Agregaciones
+    const agg = casualties.reduce((acc, c) => {
+        acc.precedence[c.precedence] = (acc.precedence[c.precedence] || 0) + 1;
+        acc.type[c.type] = (acc.type[c.type] || 0) + 1;
+        acc.category[c.category] = (acc.category[c.category] || 0) + 1;
+        return acc;
+    }, { precedence: {}, type: {}, category: {} });
+
+    const urg = agg.precedence.URG || 0;
+    const pri = agg.precedence.PRI || 0;
+    const rut = agg.precedence.RUT || 0;
+    const lit = agg.type.Camilla || 0;
+    const amb = agg.type.Ambulatorio || 0;
+
+    const scenario = {
+        title: raw.title || 'Escenario MEDEVAC (IA)',
+        line1_location: raw.line1_location || (randomFrom(['LZ Bravo','LZ Sierra','Helipuerto Base Norte','Puesto Avanzado Alfa']) + ' - ' + generateCoords()),
+        line2_freq_callsign: `${radioState.frequency.toFixed(3)} MHz / Indicativo: ${radioState.emitterRole}`,
+        line3_precedence: { URG: urg, PRI: pri, RUT: rut },
+        line4_equipment: raw.line4_equipment || randomFrom(allowed.equip),
+        line5_type: { Camilla: lit, Ambulatorio: amb },
+        line6_security: raw.line6_security || randomFrom(allowed.security),
+        line7_marking: raw.line7_marking || randomFrom(allowed.marking),
+        line8_nationality: buildLine8FromCategories(agg.category),
+        line9_nbc: raw.line9_nbc || randomFrom(allowed.nbc),
+        emitterRole: radioState.emitterRole,
+        receiverRole: radioState.receiverRole,
+        casualties,
+        notes: raw.notes || ''
+    };
+    return scenario;
+}
+
+function extractFirstJson(text) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) throw new Error('No se encontró JSON en la respuesta');
+    return text.slice(start, end + 1);
 }
 
 // Manejo de encendido/apagado

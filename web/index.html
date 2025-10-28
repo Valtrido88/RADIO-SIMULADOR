@@ -242,6 +242,31 @@
                     </select>
                 </div>
             </div>
+            <div class="role-selectors" style="margin-top:10px; border-top: 1px dashed #ddd; padding-top: 10px;">
+                <div class="control-group">
+                    <label for="useGemini">IA (Gemini)</label>
+                    <div>
+                        <input type="checkbox" id="useGemini"> <span>Usar Google Gemini para generar casos</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="geminiDifficulty">Dificultad</label>
+                    <select id="geminiDifficulty">
+                        <option value="aleatorio">Aleatorio</option>
+                        <option value="facil">Fácil</option>
+                        <option value="intermedio" selected>Intermedio</option>
+                        <option value="dificil">Difícil</option>
+                    </select>
+                </div>
+                <div class="control-group" style="flex:2 1 auto; min-width:240px;">
+                    <label for="geminiApiKey">API Key Gemini</label>
+                    <input type="password" id="geminiApiKey" placeholder="AIza..." style="width: 100%; padding: 5px; font-size: 0.9em;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                        <button id="saveGeminiKey" class="btn-small">Guardar API Key</button>
+                        <span id="geminiKeyStatus" style="font-size:0.8em;"></span>
+                    </div>
+                </div>
+            </div>
             <div id="scenarioContainer" class="scenario-container">
                 <div class="history-placeholder">Genera un caso para entrenar evacuación médica.</div>
             </div>
