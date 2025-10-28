@@ -2,6 +2,46 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/tts') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: corsHeaders(request) });
+      }
+      if (request.method !== 'POST') {
+        return new Response('Method Not Allowed', { status: 405, headers: corsHeaders(request) });
+      }
+      try {
+        const { text = '', voiceGender = 'male' } = await request.json();
+        if (!text || typeof text !== 'string') return new Response('Bad Request', { status: 400, headers: corsHeaders(request) });
+        const apiKey = env.ELEVENLABS_API_KEY;
+        if (!apiKey) return new Response('Missing ELEVENLABS_API_KEY', { status: 500, headers: corsHeaders(request) });
+
+        const voiceIds = { male: 'pNInz6obpgDQGcFmaJgB', female: 'EXAVITQu4vr4xnSDxMaL' };
+        const voiceId = voiceIds[voiceGender] || voiceIds.male;
+
+        const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': apiKey
+          },
+          body: JSON.stringify({
+            text,
+            model_id: 'eleven_monolingual_v1',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, use_speaker_boost: true }
+          })
+        });
+        if (!r.ok) {
+          const t = await r.text();
+          return new Response(`Eleven Labs error ${r.status}: ${t}` , { status: 502, headers: corsHeaders(request) });
+        }
+        const audioArrayBuffer = await r.arrayBuffer();
+        return new Response(audioArrayBuffer, { status: 200, headers: { 'Content-Type': 'audio/mpeg', ...corsHeaders(request) } });
+      } catch (err) {
+        return new Response(String(err), { status: 500, headers: corsHeaders(request) });
+      }
+    }
+
     if (url.pathname === '/api/generate-scenario') {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders(request) });

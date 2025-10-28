@@ -1,6 +1,6 @@
 // Configuración de Eleven Labs
 const ELEVENLABS_CONFIG = {
-    apiKey: 'sk_2e47ecd2bf8f6ccba94d41a68b72824d6571cde55b2296d5',
+    apiKey: '', // En producción, el backend hará la llamada; esta key es opcional para desarrollo local
     voiceIds: {
         male: 'pNInz6obpgDQGcFmaJgB', // Voice ID para voz masculina (Adam)
         female: 'EXAVITQu4vr4xnSDxMaL' // Voice ID para voz femenina (Bella)
@@ -18,7 +18,7 @@ const radioState = {
     history: [],
     signalStrength: 0,
     voiceGender: 'male', // 'male' o 'female'
-    useElevenLabs: false, // Se activa automáticamente si hay API key
+    useElevenLabs: true, // Por defecto usamos TTS; backend maneja la clave en producción
     isListening: false,
     currentScenario: null,
     emitterRole: 'Helo Uno',
@@ -84,12 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedGeminiKey();
     // En producción no persistimos claves desde el estado.
     
-    // Verificar si hay API key de Eleven Labs configurada
+    // Preferimos usar el backend para TTS; si hay API key local, también sirve para desarrollo
     if (ELEVENLABS_CONFIG.apiKey && ELEVENLABS_CONFIG.apiKey.length > 0) {
-        radioState.useElevenLabs = true;
-        console.log('✅ Eleven Labs activado');
+        console.log('🔧 Eleven Labs con API local (dev)');
     } else {
-        console.log('ℹ️ Usando síntesis de voz del navegador');
+        console.log('✅ TTS: backend habilitado (producción)');
     }
 });
 
@@ -749,25 +748,35 @@ async function speakRadioMessage(text) {
 async function speakWithElevenLabs(text) {
     try {
         const voiceId = ELEVENLABS_CONFIG.voiceIds[radioState.voiceGender];
-        
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'audio/mpeg',
-                'Content-Type': 'application/json',
-                'xi-api-key': ELEVENLABS_CONFIG.apiKey
-            },
-            body: JSON.stringify({
-                text: text,
-                model_id: 'eleven_monolingual_v1',
-                voice_settings: {
-                    stability: 0.5,
-                    similarity_boost: 0.75,
-                    style: 0.0,
-                    use_speaker_boost: true
-                }
-            })
-        });
+        // Si no hay API key local, usar backend de producción
+        let response;
+        if (!ELEVENLABS_CONFIG.apiKey) {
+            response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, voiceGender: radioState.voiceGender })
+            });
+        } else {
+            // Desarrollo: llamada directa
+            response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'audio/mpeg',
+                    'Content-Type': 'application/json',
+                    'xi-api-key': ELEVENLABS_CONFIG.apiKey
+                },
+                body: JSON.stringify({
+                    text: text,
+                    model_id: 'eleven_monolingual_v1',
+                    voice_settings: {
+                        stability: 0.5,
+                        similarity_boost: 0.75,
+                        style: 0.0,
+                        use_speaker_boost: true
+                    }
+                })
+            });
+        }
         
         if (!response.ok) {
             throw new Error('Error en Eleven Labs API');
