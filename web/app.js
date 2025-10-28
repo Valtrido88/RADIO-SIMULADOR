@@ -953,18 +953,55 @@ function generateCasualty(seq) {
         severity: randomFrom(severities)
     }));
 
+    const vitals = generateVitals(precedence);
+
     return {
         id: seq,
         category, // Militar | Civil | EPW
         precedence, // URG | PRI | RUT
         type, // Camilla | Ambulatorio
         injuries,
+        vitals, // { hr, spo2, bp, rr }
         bleeding: randomFrom(blood),
         conscious: randomFrom(['Sí', 'Sí', 'No']),
         airway: randomFrom(['Permeable', 'Comprometida']),
         breathing: randomFrom(['Adecuada', 'Dificultosa']),
         circulation: randomFrom(['Estable', 'Inestable'])
     };
+}
+
+function generateVitals(precedence) {
+    // Rango por precedencia (aprox.)
+    let hrRange, spo2Range, sysRange, diaRange, rrRange;
+    if (precedence === 'URG') {
+        hrRange = [110, 130];
+        spo2Range = [86, 94];
+        sysRange = [85, 105];
+        diaRange = [50, 70];
+        rrRange = [22, 30];
+    } else if (precedence === 'PRI') {
+        hrRange = [90, 110];
+        spo2Range = [90, 97];
+        sysRange = [95, 120];
+        diaRange = [60, 80];
+        rrRange = [18, 24];
+    } else { // RUT
+        hrRange = [70, 100];
+        spo2Range = [95, 100];
+        sysRange = [110, 130];
+        diaRange = [70, 85];
+        rrRange = [12, 20];
+    }
+    const hr = randInt(hrRange[0], hrRange[1]);
+    const spo2 = randInt(spo2Range[0], spo2Range[1]);
+    const sys = randInt(sysRange[0], sysRange[1]);
+    const dia = randInt(diaRange[0], diaRange[1]);
+    const rr = randInt(rrRange[0], rrRange[1]);
+    return { hr, spo2, bp: `${sys}/${dia}`, rr };
+}
+
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function buildNineLineFromScenario(s) {
@@ -1035,6 +1072,7 @@ function renderCasualtyCard(c) {
                 <div><strong>Lesiones:</strong> ${c.injuries.map(i=>`${i.region} (${i.severity})`).join('; ')}</div>
                 <div><strong>Vía aérea:</strong> ${c.airway} · <strong>Resp:</strong> ${c.breathing} · <strong>Circulación:</strong> ${c.circulation}</div>
                 <div><strong>Sangrado:</strong> ${c.bleeding} · <strong>Consciente:</strong> ${c.conscious}</div>
+                <div><strong>Signos vitales:</strong> FC ${c.vitals.hr} lpm · SpO₂ ${c.vitals.spo2}% · TA ${c.vitals.bp} mmHg · FR ${c.vitals.rr} rpm</div>
             </div>
         </div>
     </div>`;
@@ -1055,6 +1093,7 @@ function buildCasualtyCardText(c, s) {
 `Herido ${c.id} — ${c.category} · ${c.precedence} · ${c.type}\n`+
 `Lesiones: ${c.injuries.map(i=>`${i.region} (${i.severity})`).join('; ')}\n`+
 `Vía aérea: ${c.airway} | Resp: ${c.breathing} | Circ: ${c.circulation} | Sangrado: ${c.bleeding} | Consciente: ${c.conscious}\n`+
+`Signos vitales: FC ${c.vitals.hr} lpm | SpO2 ${c.vitals.spo2}% | TA ${c.vitals.bp} mmHg | FR ${c.vitals.rr} rpm\n`+
 `Ubicación: ${s.line1_location}\n`+
 `Frecuencia/Indicativo: ${s.line2_freq_callsign}`);
 }
