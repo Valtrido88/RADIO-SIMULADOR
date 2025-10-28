@@ -1,5 +1,6 @@
 name = "medevacsimulator"
 type = "javascript"
+main = "worker.js"
 account_id = "752b02ef3a2f0ecf4bcd51d37bcb32b3"
 workers_dev = true
 route = ""
@@ -14,8 +15,4 @@ routes = [
 
 [build]
 command = ""
-cwd = "./web"
-watch_paths = ["src/**/*.ts"]
-
-[build.upload]
-format = "service-worker"
+cwd = "."

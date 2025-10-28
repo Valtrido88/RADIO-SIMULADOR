@@ -25,8 +25,8 @@ const radioState = {
     receiverRole: 'Base',
     // Gemini
     useGemini: true,
-    // La API key fue proporcionada por el usuario y se integra aquí (se guardará también en localStorage al cargar)
-    geminiApiKey: 'AIzaSyByewrdQbkA7wolYVISvUQzfyqwa5Tk67M',
+    // No exponer claves en producción: dejar vacía por defecto. La UI/localStorage puede establecerla en entornos de desarrollo.
+    geminiApiKey: '',
     geminiDifficulty: 'intermedio'
 };
 
@@ -82,21 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDisplay();
     loadSavedApiKey();
     loadSavedGeminiKey();
-    // Si hay una API key integrada en el estado (por ejemplo, proporcionada por el usuario), asegurar que se guarde en localStorage
-    try {
-        if (radioState.geminiApiKey && radioState.geminiApiKey.length > 10) {
-            localStorage.setItem('geminiApiKey', radioState.geminiApiKey);
-            localStorage.setItem('useGemini', String(radioState.useGemini));
-            if (elements.geminiApiKey) elements.geminiApiKey.value = radioState.geminiApiKey;
-            if (elements.useGemini) elements.useGemini.checked = radioState.useGemini;
-            if (elements.geminiKeyStatus) {
-                elements.geminiKeyStatus.textContent = '✓ Guardada';
-                elements.geminiKeyStatus.style.color = '#4CAF50';
-            }
-        }
-    } catch (e) {
-        console.warn('No se pudo persistir la API key de Gemini en localStorage');
-    }
+    // En producción no persistimos claves desde el estado.
     
     // Verificar si hay API key de Eleven Labs configurada
     if (ELEVENLABS_CONFIG.apiKey && ELEVENLABS_CONFIG.apiKey.length > 0) {
@@ -306,18 +292,12 @@ function setupEventListeners() {
 
 // --- Gemini: Generación de escenarios ---
 async function generateScenarioWithGemini(difficulty = 'intermedio') {
-    const apiKey = radioState.geminiApiKey;
-    if (!apiKey) throw new Error('No hay API key de Gemini');
-
     const difficultyMap = {
         facil: 'fácil',
         intermedio: 'intermedia',
         dificil: 'difícil',
         aleatorio: 'aleatoria'
     };
-
-    const model = 'gemini-1.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const allowed = {
         categories: ['Militar','Civil','EPW'],
@@ -370,20 +350,34 @@ Reglas:
 - Los signos vitales deben ser coherentes con la precedencia: URG suele peor que PRI, y PRI peor que RUT.
 - No incluyas comentarios ni explicaciones fuera del JSON.`;
 
-    const body = {
-        contents: [ { role: 'user', parts: [ { text: prompt } ] } ],
-        generationConfig: { temperature: 0.9 }
-    };
-
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const t = await res.text();
-        throw new Error(`Gemini error ${res.status}: ${t}`);
+    // Si hay API key en el cliente, usar llamada directa (desarrollo). Si no, usar el endpoint backend /api/generate-scenario
+    if (!radioState.geminiApiKey) {
+        const backendRes = await fetch('/api/generate-scenario', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                difficulty,
+                prompt,
+                frequency: radioState.frequency,
+                emitterRole: radioState.emitterRole,
+                receiverRole: radioState.receiverRole
+            })
+        });
+        if (!backendRes.ok) {
+            const t = await backendRes.text();
+            throw new Error(`Backend error ${backendRes.status}: ${t}`);
+        }
+        const scenario = await backendRes.json();
+        return scenario;
     }
+
+    // Desarrollo: llamada directa a la API de Gemini
+    const apiKey = radioState.geminiApiKey;
+    const model = 'gemini-1.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const body = { contents: [ { role: 'user', parts: [ { text: prompt } ] } ], generationConfig: { temperature: 0.9 } };
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) { const t = await res.text(); throw new Error(`Gemini error ${res.status}: ${t}`); }
     const data = await res.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const json = extractFirstJson(text);
