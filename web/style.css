@@ -682,6 +682,20 @@ body {
     color: var(--info-color);
 }
 
+
+    /* Indicador de estado backend */
+    .status-pill {
+         display: inline-block;
+         padding: 4px 10px;
+         border-radius: 999px;
+         font-size: 12px;
+         background: #eee;
+         color: #333;
+         margin-top: 8px;
+    }
+    .status-ok { background: #e6f5ec; color: #1b5e20; border: 1px solid #8bc34a; }
+    .status-warn { background: #fff8e1; color: #8d6e00; border: 1px solid #ffeb3b; }
+    .status-error { background: #ffebee; color: #b71c1c; border: 1px solid #f44336; }
 .nine-line ol {
     margin-left: 20px;
 }

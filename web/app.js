@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedApiKey();
     loadSavedGeminiKey();
     // En producción no persistimos claves desde el estado.
+    checkBackendHealth();
     
     // Preferimos usar el backend para TTS; si hay API key local, también sirve para desarrollo
     if (ELEVENLABS_CONFIG.apiKey && ELEVENLABS_CONFIG.apiKey.length > 0) {
@@ -443,6 +444,35 @@ function extractFirstJson(text) {
     const end = text.lastIndexOf('}');
     if (start === -1 || end === -1 || end <= start) throw new Error('No se encontró JSON en la respuesta');
     return text.slice(start, end + 1);
+}
+
+// --- Healthcheck backend ---
+async function checkBackendHealth() {
+    const el = document.getElementById('backendStatus');
+    if (!el) return;
+    el.textContent = 'Backend: comprobando…';
+    el.classList.remove('status-ok','status-warn','status-error');
+    try {
+        const res = await fetch('/api/health', { method: 'GET' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const h = await res.json();
+        const hasGemini = !!(h?.services?.gemini);
+        const hasEleven = !!(h?.services?.elevenlabs);
+        if (hasGemini && hasEleven) {
+            el.textContent = 'Backend: OK (Gemini, ElevenLabs)';
+            el.classList.add('status-ok');
+        } else if (hasGemini || hasEleven) {
+            const which = hasGemini ? 'Gemini' : 'ElevenLabs';
+            el.textContent = `Backend: parcial (${which})`;
+            el.classList.add('status-warn');
+        } else {
+            el.textContent = 'Backend: no configurado';
+            el.classList.add('status-error');
+        }
+    } catch (e) {
+        el.textContent = 'Backend: sin respuesta';
+        el.classList.add('status-error');
+    }
 }
 
 // Manejo de encendido/apagado

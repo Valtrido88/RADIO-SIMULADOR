@@ -2,6 +2,19 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/health') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: corsHeaders(request) });
+      }
+      if (request.method !== 'GET') {
+        return new Response('Method Not Allowed', { status: 405, headers: corsHeaders(request) });
+      }
+      const hasGemini = Boolean(env.GEMINI_API_KEY);
+      const hasEleven = Boolean(env.ELEVENLABS_API_KEY);
+      const data = { ok: hasGemini || hasEleven, services: { gemini: hasGemini, elevenlabs: hasEleven } };
+      return jsonResponse(data, request);
+    }
+
     if (url.pathname === '/api/tts') {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders(request) });
@@ -180,7 +193,7 @@ function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '*';
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400'
   };
