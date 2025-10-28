@@ -15,7 +15,7 @@ export default {
       return jsonResponse(data, request);
     }
 
-    if (url.pathname === '/api/tts') {
+  if (url.pathname === '/api/tts') {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: corsHeaders(request) });
       }
@@ -23,13 +23,15 @@ export default {
         return new Response('Method Not Allowed', { status: 405, headers: corsHeaders(request) });
       }
       try {
-        const { text = '', voiceGender = 'male' } = await request.json();
+        const { text = '', voiceGender = 'male', voiceId: bodyVoiceId } = await request.json();
         if (!text || typeof text !== 'string') return new Response('Bad Request', { status: 400, headers: corsHeaders(request) });
         const apiKey = env.ELEVENLABS_API_KEY;
         if (!apiKey) return new Response('Missing ELEVENLABS_API_KEY', { status: 500, headers: corsHeaders(request) });
 
         const voiceIds = { male: 'pNInz6obpgDQGcFmaJgB', female: 'EXAVITQu4vr4xnSDxMaL' };
-        const voiceId = voiceIds[voiceGender] || voiceIds.male;
+        const voiceId = (typeof bodyVoiceId === 'string' && bodyVoiceId.trim().length > 0)
+          ? bodyVoiceId.trim()
+          : (voiceIds[voiceGender] || voiceIds.male);
 
         const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: 'POST',

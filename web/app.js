@@ -23,11 +23,15 @@ const radioState = {
     currentScenario: null,
     emitterRole: 'Helo Uno',
     receiverRole: 'Base',
+    // Eleven Labs - Voice ID personalizado (opcional)
+    customVoiceId: '',
     // Gemini
     useGemini: true,
     // No exponer claves en producción: dejar vacía por defecto. La UI/localStorage puede establecerla en entornos de desarrollo.
     geminiApiKey: '',
-    geminiDifficulty: 'intermedio'
+    geminiDifficulty: 'intermedio',
+    // Backend
+    backendBase: ''
 };
 
 // Referencias a elementos del DOM
@@ -49,6 +53,9 @@ const elements = {
     saveApiKey: document.getElementById('saveApiKey'),
     testTTSButton: document.getElementById('testTTSButton'),
     apiKeyStatus: document.getElementById('apiKeyStatus'),
+    elevenCustomVoiceId: document.getElementById('elevenCustomVoiceId'),
+    saveVoiceId: document.getElementById('saveVoiceId'),
+    voiceIdStatus: document.getElementById('voiceIdStatus'),
     signalMeter: document.getElementById('signalMeter'),
     rxLed: document.getElementById('rxLed'),
     txLed: document.getElementById('txLed'),
@@ -69,6 +76,7 @@ const elements = {
     scenarioContainer: document.getElementById('scenarioContainer'),
     emitterRole: document.getElementById('emitterRole'),
     receiverRole: document.getElementById('receiverRole'),
+    backendBase: document.getElementById('backendBase'),
     // Gemini
     useGemini: document.getElementById('useGemini'),
     geminiApiKey: document.getElementById('geminiApiKey'),
@@ -83,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDisplay();
     loadSavedApiKey();
     loadSavedGeminiKey();
+    loadSavedVoiceId();
+    loadSavedBackendBase();
     // En producción no persistimos claves desde el estado.
     checkBackendHealth();
     
@@ -125,6 +135,71 @@ function saveApiKey() {
     elements.apiKeyStatus.style.color = '#4CAF50';
     
     addToHistory('SISTEMA', 'Eleven Labs activado. Las voces ahora serán ultra realistas.', 'system');
+}
+
+// Cargar Voice ID personalizado
+function loadSavedVoiceId() {
+    try {
+        const saved = localStorage.getItem('elevenCustomVoiceId') || '';
+        radioState.customVoiceId = saved;
+        if (elements.elevenCustomVoiceId) elements.elevenCustomVoiceId.value = saved;
+        if (saved && elements.voiceIdStatus) {
+            elements.voiceIdStatus.textContent = '✓ Guardado';
+            elements.voiceIdStatus.style.color = '#4CAF50';
+        }
+    } catch (e) {
+        console.warn('No se pudo cargar el Voice ID');
+    }
+}
+
+// Guardar Voice ID personalizado
+function saveVoiceId() {
+    const v = elements.elevenCustomVoiceId?.value?.trim() || '';
+    radioState.customVoiceId = v;
+    if (v) {
+        localStorage.setItem('elevenCustomVoiceId', v);
+        if (elements.voiceIdStatus) {
+            elements.voiceIdStatus.textContent = '✓ Voice ID guardado';
+            elements.voiceIdStatus.style.color = '#4CAF50';
+        }
+        addToHistory('SISTEMA', 'Voice ID personalizado establecido para Eleven Labs.', 'system');
+    } else {
+        localStorage.removeItem('elevenCustomVoiceId');
+        if (elements.voiceIdStatus) {
+            elements.voiceIdStatus.textContent = 'Voice ID limpiado';
+            elements.voiceIdStatus.style.color = '#ff9800';
+        }
+        addToHistory('SISTEMA', 'Voice ID personalizado eliminado. Se usarán voces por defecto.', 'system');
+    }
+}
+
+// Backend helpers: base configurable y fetch con esa base
+function loadSavedBackendBase() {
+    try {
+        const base = localStorage.getItem('backendBase') || '';
+        radioState.backendBase = base;
+        if (elements.backendBase) elements.backendBase.value = base;
+    } catch {}
+}
+
+function saveBackendBase() {
+    const base = elements.backendBase?.value?.trim() || '';
+    radioState.backendBase = base;
+    if (base) localStorage.setItem('backendBase', base); else localStorage.removeItem('backendBase');
+    checkBackendHealth();
+}
+
+function buildApiUrl(path) {
+    const base = radioState.backendBase?.trim();
+    if (!base) return path; // relativo (misma origin)
+    try {
+        return new URL(path, base).toString();
+    } catch { return path; }
+}
+
+async function apiFetch(path, options) {
+    const url = buildApiUrl(path);
+    return fetch(url, options);
 }
 // Cargar API key de Gemini guardada
 function loadSavedGeminiKey() {
@@ -179,6 +254,7 @@ function setupEventListeners() {
     elements.squelchSlider.addEventListener('input', handleSquelchChange);
     elements.voiceSelect.addEventListener('change', handleVoiceChange);
     elements.saveApiKey.addEventListener('click', saveApiKey);
+    if (elements.saveVoiceId) elements.saveVoiceId.addEventListener('click', saveVoiceId);
     if (elements.testTTSButton) {
         elements.testTTSButton.addEventListener('click', async () => {
             const phrase = 'Base, prueba de sonido desde simulador MEDEVAC. ¿Me copian? Cambio.';
@@ -187,6 +263,10 @@ function setupEventListeners() {
         });
     }
     if (elements.saveGeminiKey) elements.saveGeminiKey.addEventListener('click', saveGeminiKey);
+    if (elements.backendBase) {
+        elements.backendBase.addEventListener('change', saveBackendBase);
+        elements.backendBase.addEventListener('blur', saveBackendBase);
+    }
     elements.presetButtons.forEach(btn => {
         btn.addEventListener('click', handlePresetClick);
     });
@@ -785,18 +865,20 @@ async function speakRadioMessage(text) {
 // Síntesis con Eleven Labs
 async function speakWithElevenLabs(text) {
     try {
-        const voiceId = ELEVENLABS_CONFIG.voiceIds[radioState.voiceGender];
+        const selectedVoiceId = (radioState.customVoiceId && radioState.customVoiceId.trim().length > 0)
+            ? radioState.customVoiceId.trim()
+            : ELEVENLABS_CONFIG.voiceIds[radioState.voiceGender];
         // Si no hay API key local, usar backend de producción
         let response;
         if (!ELEVENLABS_CONFIG.apiKey) {
             response = await apiFetch('/api/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, voiceGender: radioState.voiceGender })
+                body: JSON.stringify({ text, voiceGender: radioState.voiceGender, voiceId: radioState.customVoiceId?.trim() || undefined })
             });
         } else {
             // Desarrollo: llamada directa
-            response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'audio/mpeg',
