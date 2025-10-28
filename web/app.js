@@ -876,18 +876,28 @@ function generateCoords() {
 }
 
 function generateMedevacScenario() {
-    const precedences = ['URG', 'PRI', 'RUT'];
     const specialEq = ['Ninguno', 'Guinche', 'Ventilador', 'Oxígeno'];
     const security = ['Sin enemigo', 'Enemigo posible', 'Enemigo confirmado'];
     const marking = ['Humo', 'Páneles', 'IR', 'Bengala'];
-    const nationality = ['Militar Aliado', 'Civil Aliado', 'Militar Neutral'];
     const contamination = ['Ninguna', 'Q', 'B', 'R'];
 
-    const urg = Math.floor(Math.random() * 2); // 0-1
-    const pri = Math.floor(Math.random() * 3); // 0-2
-    const rut = Math.floor(Math.random() * 3); // 0-2
-    const lit = Math.max(1, Math.floor((urg + pri + rut) / 2));
-    const amb = Math.max(0, urg + pri + rut - lit);
+    // Generar entre 1 y 4 bajas
+    const casualtyCount = Math.floor(Math.random() * 4) + 1; // 1..4
+    const casualties = Array.from({ length: casualtyCount }).map((_, idx) => generateCasualty(idx + 1));
+
+    // Agregaciones para L3 (precedencia) y L5 (tipo)
+    const agg = casualties.reduce((acc, c) => {
+        acc.precedence[c.precedence] = (acc.precedence[c.precedence] || 0) + 1;
+        acc.type[c.type] = (acc.type[c.type] || 0) + 1;
+        acc.category[c.category] = (acc.category[c.category] || 0) + 1;
+        return acc;
+    }, { precedence: {}, type: {}, category: {} });
+
+    const urg = agg.precedence.URG || 0;
+    const pri = agg.precedence.PRI || 0;
+    const rut = agg.precedence.RUT || 0;
+    const lit = agg.type.Camilla || 0;
+    const amb = agg.type.Ambulatorio || 0;
 
     const scenario = {
         title: randomFrom([
@@ -902,10 +912,11 @@ function generateMedevacScenario() {
         line5_type: { Camilla: lit, Ambulatorio: amb },
         line6_security: randomFrom(security),
         line7_marking: randomFrom(marking),
-        line8_nationality: randomFrom(nationality),
+        line8_nationality: buildLine8FromCategories(agg.category),
         line9_nbc: randomFrom(contamination),
         emitterRole: radioState.emitterRole,
         receiverRole: radioState.receiverRole,
+        casualties,
         notes: randomFrom([
             'Hemorragia controlada, requiere traslado inmediato.',
             'Paciente con TCE moderado, monitoreo de vía aérea.',
@@ -914,6 +925,46 @@ function generateMedevacScenario() {
         ])
     };
     return scenario;
+}
+
+function buildLine8FromCategories(catAgg) {
+    const parts = [];
+    if (catAgg.Militar) parts.push(`${catAgg.Militar} Militar(es) Aliado(s)`);
+    if (catAgg.Civil) parts.push(`${catAgg.Civil} Civil(es)`);
+    if (catAgg.EPW) parts.push(`${catAgg.EPW} Prisionero(s) de guerra (EPW)`);
+    return parts.length ? parts.join(', ') : 'Pendiente de confirmar';
+}
+
+function generateCasualty(seq) {
+    const categories = ['Militar', 'Civil', 'EPW'];
+    const precedences = ['URG', 'PRI', 'RUT'];
+    const types = ['Camilla', 'Ambulatorio'];
+    const regions = ['Cabeza', 'Cuello', 'Tórax', 'Abdomen', 'Pelvis', 'Brazo Izq', 'Brazo Der', 'Pierna Izq', 'Pierna Der'];
+    const severities = ['Leve', 'Moderada', 'Grave'];
+    const blood = ['Bajo', 'Moderado', 'Alto'];
+
+    // Aleatorios con sesgo leve a Militar y urgencias
+    const category = randomFrom([ 'Militar','Militar','Civil','EPW' ]);
+    const precedence = randomFrom([ 'URG','URG','PRI','RUT' ]);
+    const type = randomFrom([ 'Camilla','Ambulatorio','Camilla' ]);
+    const injuryCount = Math.floor(Math.random() * 3) + 1; // 1..3
+    const injuries = Array.from({ length: injuryCount }).map(() => ({
+        region: randomFrom(regions),
+        severity: randomFrom(severities)
+    }));
+
+    return {
+        id: seq,
+        category, // Militar | Civil | EPW
+        precedence, // URG | PRI | RUT
+        type, // Camilla | Ambulatorio
+        injuries,
+        bleeding: randomFrom(blood),
+        conscious: randomFrom(['Sí', 'Sí', 'No']),
+        airway: randomFrom(['Permeable', 'Comprometida']),
+        breathing: randomFrom(['Adecuada', 'Dificultosa']),
+        circulation: randomFrom(['Estable', 'Inestable'])
+    };
 }
 
 function buildNineLineFromScenario(s) {
@@ -927,6 +978,7 @@ function buildNineLineFromScenario(s) {
 `L7: ${s.line7_marking}\n` +
 `L8: ${s.line8_nationality}\n` +
 `L9: ${s.line9_nbc}\n` +
+`Bajas: ${s.casualties.length} (${s.casualties.map(c=>c.category).join(', ')})\n` +
 `Notas: ${s.notes}`);
 }
 
@@ -949,8 +1001,62 @@ function renderScenario(s) {
                 <div><strong>L9</strong> ${escapeHtml(s.line9_nbc)}</div>
                 <div><strong>Notas</strong> ${escapeHtml(s.notes)}</div>
             </div>
+            <div class="casualty-list">
+                ${s.casualties.map(c => renderCasualtyCard(c)).join('')}
+            </div>
         </div>
     `;
+
+    // Listeners para botones de copiar ficha
+    s.casualties.forEach((c) => {
+        const btn = document.getElementById(`copyCasualty-${c.id}`);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const txt = buildCasualtyCardText(c, s);
+                copyToClipboard(txt);
+                addToHistory('SISTEMA', `Ficha del herido ${c.id} copiada.`, 'system');
+            });
+        }
+    });
+}
+
+function renderCasualtyCard(c) {
+    return `
+    <div class="casualty-card">
+        <div class="casualty-header">
+            <strong>Herido ${c.id}</strong> — ${c.category} · ${c.precedence} · ${c.type}
+            <button id="copyCasualty-${c.id}" class="btn-small" style="float:right;">Copiar ficha</button>
+        </div>
+        <div class="casualty-body">
+            <div class="body-diagram">
+                ${renderBodyRegions(c.injuries)}
+            </div>
+            <div class="casualty-info">
+                <div><strong>Lesiones:</strong> ${c.injuries.map(i=>`${i.region} (${i.severity})`).join('; ')}</div>
+                <div><strong>Vía aérea:</strong> ${c.airway} · <strong>Resp:</strong> ${c.breathing} · <strong>Circulación:</strong> ${c.circulation}</div>
+                <div><strong>Sangrado:</strong> ${c.bleeding} · <strong>Consciente:</strong> ${c.conscious}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderBodyRegions(injuries) {
+    const regions = ['Cabeza','Cuello','Tórax','Abdomen','Pelvis','Brazo Izq','Brazo Der','Pierna Izq','Pierna Der'];
+    const hurt = new Set(injuries.map(i=>i.region));
+    return `
+        <div class="diagram-grid">
+            ${regions.map(r => `<div class="region ${hurt.has(r)?'hurt':''}" title="${r}">${r}</div>`).join('')}
+        </div>
+    `;
+}
+
+function buildCasualtyCardText(c, s) {
+    return (
+`Herido ${c.id} — ${c.category} · ${c.precedence} · ${c.type}\n`+
+`Lesiones: ${c.injuries.map(i=>`${i.region} (${i.severity})`).join('; ')}\n`+
+`Vía aérea: ${c.airway} | Resp: ${c.breathing} | Circ: ${c.circulation} | Sangrado: ${c.bleeding} | Consciente: ${c.conscious}\n`+
+`Ubicación: ${s.line1_location}\n`+
+`Frecuencia/Indicativo: ${s.line2_freq_callsign}`);
 }
 
 // Construir mensaje procedimental breve para radio a partir del escenario
