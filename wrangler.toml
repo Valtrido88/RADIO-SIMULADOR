@@ -1,0 +1,21 @@
+name = "medevacsimulator"
+type = "javascript"
+account_id = "752b02ef3a2f0ecf4bcd51d37bcb32b3"
+workers_dev = true
+route = ""
+zone_id = "da4d3da67f946f15133593a43e4c47b8"
+
+[env.production]
+name = "medevacsimulator-production"
+workers_dev = false
+routes = [
+  { pattern = "medevacsimulator.es", zone_id = "da4d3da67f946f15133593a43e4c47b8" }
+]
+
+[build]
+command = ""
+cwd = "./web"
+watch_paths = ["src/**/*.ts"]
+
+[build.upload]
+format = "service-worker"

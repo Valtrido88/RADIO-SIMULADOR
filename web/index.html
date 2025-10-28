@@ -59,9 +59,9 @@
                     <label>Canales Preestablecidos:</label>
                     <div class="preset-buttons">
                         <button class="preset-btn" data-freq="121.500">Emergencia</button>
-                        <button class="preset-btn" data-freq="118.100">Tráfico</button>
-                        <button class="preset-btn" data-freq="122.750">Unicom</button>
-                        <button class="preset-btn" data-freq="124.000">Médico</button>
+                        <button class="preset-btn" data-freq="118.100">Torre Control</button>
+                        <button class="preset-btn" data-freq="243.000">SAR Militar</button>
+                        <button class="preset-btn" data-freq="124.000">MEDEVAC</button>
                     </div>
                 </div>
 
@@ -76,6 +76,19 @@
                         <label for="squelchSlider">Squelch</label>
                         <input type="range" id="squelchSlider" min="0" max="10" value="3">
                         <span id="squelchValue">3</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="voiceSelect">Voz Operador</label>
+                        <select id="voiceSelect">
+                            <option value="male">Voz Masculina</option>
+                            <option value="female">Voz Femenina</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="elevenLabsKey">API Key Eleven Labs</label>
+                        <input type="password" id="elevenLabsKey" placeholder="sk_..." style="width: 100%; padding: 5px; font-size: 0.9em;">
+                        <button id="saveApiKey" class="btn-small" style="margin-top: 5px;">Guardar API Key</button>
+                        <span id="apiKeyStatus" style="font-size: 0.8em; margin-left: 5px;"></span>
                     </div>
                 </div>
 
@@ -167,11 +180,38 @@
                         <li><strong>Observa historial:</strong> Todas tus transmisiones se registran</li>
                     </ol>
 
-                    <h4>Protocolos Reales:</h4>
-                    <p><strong>Identifícate:</strong> "Base, aquí Helicóptero Uno"</p>
-                    <p><strong>Transmisión:</strong> Mantén breve (máx 10-15 segundos)</p>
-                    <p><strong>Fin de transmisión:</strong> Di "Cambio" (esperas respuesta) o "Corto" (no esperas)</p>
-                    <p><strong>Emergencia:</strong> Frecuencia 121.500 MHz es de emergencia internacional</p>
+                    <h4>Protocolos Reales MEDEVAC:</h4>
+                    
+                    <p><strong>🔊 Radio Check (Prueba de Sonido):</strong></p>
+                    <p style="margin-left: 20px;">"Base, aquí Helicóptero Uno. Radio check. Cambio."</p>
+                    <p style="margin-left: 20px; color: #4CAF50;">→ "Te copiamos Lima Charlie. 5 por 5. Cambio."</p>
+                    
+                    <p><strong>🚨 Emergencia / Paciente Crítico:</strong></p>
+                    <p style="margin-left: 20px;">"Base, Helicóptero Uno con paciente crítico a bordo. Solicitamos despeje prioritario. Cambio."</p>
+                    <p style="margin-left: 20px; color: #4CAF50;">→ "Roger emergencia. Hospital notificado. Trauma preparado. Cambio."</p>
+                    
+                    <p><strong>✈️ Solicitud de Aterrizaje:</strong></p>
+                    <p style="margin-left: 20px;">"Base, Helicóptero Uno solicitando autorización de aterrizaje en heliport. Cambio."</p>
+                    <p style="margin-left: 20px; color: #4CAF50;">→ "Autorizado aterrizaje. Zona despejada. Viento norte 5 nudos. Cambio."</p>
+                    
+                    <p><strong>📍 Reporte de Posición:</strong></p>
+                    <p style="margin-left: 20px;">"Base, Helicóptero Uno. Posición: 10 millas al norte. ETA 5 minutos. Cambio."</p>
+                    <p style="margin-left: 20px; color: #4CAF50;">→ "Roger tu posición. Heliport será despejado. Cambio."</p>
+                    
+                    <p><strong>Terminología Militar:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Lima Charlie</strong> = Loud & Clear (fuerte y claro)</li>
+                        <li><strong>5 por 5</strong> = Señal perfecta</li>
+                        <li><strong>Roger</strong> = Recibido/Entendido</li>
+                        <li><strong>Wilco</strong> = Will Comply (voy a cumplir)</li>
+                        <li><strong>Cambio</strong> = Termino, espero respuesta</li>
+                        <li><strong>Corto</strong> = Termino comunicación</li>
+                        <li><strong>ETA</strong> = Estimated Time of Arrival</li>
+                    </ul>
+                    
+                    <p><strong>Frecuencias Importantes:</strong></p>
+                    <p style="margin-left: 20px;">121.500 MHz = Emergencia internacional</p>
+                    <p style="margin-left: 20px;">243.000 MHz = SAR Militar (Search and Rescue)</p>
 
                     <h4>Bandas de Frecuencia:</h4>
                     <ul>
