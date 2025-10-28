@@ -165,6 +165,65 @@
             </section>
         </main>
 
+        <!-- Panel de Ayuda Operacional -->
+        <section class="ops-panel">
+            <div class="panel-header">
+                <h3>Ayuda Operacional</h3>
+            </div>
+            <div class="ops-content">
+                <div class="ops-columns">
+                    <!-- 9 Líneas MEDEVAC -->
+                    <div class="nine-line">
+                        <h4>Formato MEDEVAC - 9 Líneas</h4>
+                        <ol>
+                            <li><strong>Línea 1:</strong> Ubicación del punto de recogida</li>
+                            <li><strong>Línea 2:</strong> Frecuencia / Indicativo</li>
+                            <li><strong>Línea 3:</strong> Número de pacientes por precedencia (Urgente/Prioridad/Rutina)</li>
+                            <li><strong>Línea 4:</strong> Equipo especial requerido (Ninguno/Guinche/Ventilador)</li>
+                            <li><strong>Línea 5:</strong> Número de pacientes por tipo (Camilla/Ambulatorio)</li>
+                            <li><strong>Línea 6:</strong> Seguridad del punto (Sin enemigo/Posible/Confirmado)</li>
+                            <li><strong>Línea 7:</strong> Señalización del punto (Humo/Páneles/IR/Bengala)</li>
+                            <li><strong>Línea 8:</strong> Nacionalidad/Estado del paciente</li>
+                            <li><strong>Línea 9:</strong> Contaminación NBC (Ninguna/Q/B/R)</li>
+                        </ol>
+                        <div class="nine-line-actions">
+                            <button id="copyNineLineTemplate" class="btn-small">Copiar plantilla 9 líneas</button>
+                        </div>
+                    </div>
+
+                    <!-- Alfabeto Fonético OTAN -->
+                    <div class="phonetic">
+                        <h4>Alfabeto Fonético OTAN</h4>
+                        <div class="phonetic-grid">
+                            <span>A - Alfa</span><span>B - Bravo</span><span>C - Charlie</span><span>D - Delta</span>
+                            <span>E - Echo</span><span>F - Foxtrot</span><span>G - Golf</span><span>H - Hotel</span>
+                            <span>I - India</span><span>J - Juliett</span><span>K - Kilo</span><span>L - Lima</span>
+                            <span>M - Mike</span><span>N - November</span><span>O - Oscar</span><span>P - Papa</span>
+                            <span>Q - Quebec</span><span>R - Romeo</span><span>S - Sierra</span><span>T - Tango</span>
+                            <span>U - Uniform</span><span>V - Victor</span><span>W - Whiskey</span><span>X - X-ray</span>
+                            <span>Y - Yankee</span><span>Z - Zulu</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panel de Escenarios MEDEVAC -->
+        <section class="scenario-panel">
+            <div class="panel-header">
+                <h3>Escenarios MEDEVAC</h3>
+                <div>
+                    <button id="generateScenario" class="btn-small">Generar caso</button>
+                    <button id="copyNineLine" class="btn-small">Copiar 9 líneas</button>
+                    <button id="loadNineLineToMsg" class="btn-small">Cargar 9 líneas</button>
+                    <button id="loadProceduralToMsg" class="btn-small">Cargar mensaje radio</button>
+                </div>
+            </div>
+            <div id="scenarioContainer" class="scenario-container">
+                <div class="history-placeholder">Genera un caso para entrenar evacuación médica.</div>
+            </div>
+        </section>
+
         <!-- Panel de Ayuda -->
         <footer class="help-panel">
             <details>

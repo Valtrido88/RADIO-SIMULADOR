@@ -49,7 +49,15 @@ const elements = {
     pttButton: document.getElementById('pttButton'),
     transmissionInfo: document.getElementById('transmissionInfo'),
     historyContainer: document.getElementById('historyContainer'),
-    clearHistory: document.getElementById('clearHistory')
+    clearHistory: document.getElementById('clearHistory'),
+    // Ayuda operacional
+    copyNineLineTemplate: document.getElementById('copyNineLineTemplate'),
+    // Escenarios
+    generateScenario: document.getElementById('generateScenario'),
+    copyNineLine: document.getElementById('copyNineLine'),
+    loadNineLineToMsg: document.getElementById('loadNineLineToMsg'),
+    loadProceduralToMsg: document.getElementById('loadProceduralToMsg'),
+    scenarioContainer: document.getElementById('scenarioContainer')
 };
 
 // Inicialización
@@ -120,6 +128,57 @@ function setupEventListeners() {
     elements.pttButton.addEventListener('touchstart', startTransmission);
     elements.pttButton.addEventListener('touchend', stopTransmission);
     elements.clearHistory.addEventListener('click', clearHistory);
+    
+    // Ayuda operacional
+    if (elements.copyNineLineTemplate) {
+        elements.copyNineLineTemplate.addEventListener('click', () => {
+            const template = buildNineLineTemplate();
+            copyToClipboard(template);
+            addToHistory('SISTEMA', 'Plantilla de 9 líneas copiada al portapapeles.', 'system');
+        });
+    }
+    
+    // Escenarios
+    if (elements.generateScenario) {
+        elements.generateScenario.addEventListener('click', () => {
+            const scenario = generateMedevacScenario();
+            radioState.currentScenario = scenario;
+            renderScenario(scenario);
+        });
+    }
+    if (elements.copyNineLine) {
+        elements.copyNineLine.addEventListener('click', () => {
+            if (!radioState.currentScenario) {
+                alert('Primero genera un caso.');
+                return;
+            }
+            const nineLine = buildNineLineFromScenario(radioState.currentScenario);
+            copyToClipboard(nineLine);
+            addToHistory('SISTEMA', '9 líneas del caso copiadas al portapapeles.', 'system');
+        });
+    }
+    if (elements.loadNineLineToMsg) {
+        elements.loadNineLineToMsg.addEventListener('click', () => {
+            if (!radioState.currentScenario) {
+                alert('Primero genera un caso.');
+                return;
+            }
+            const nineLine = buildNineLineFromScenario(radioState.currentScenario);
+            elements.messageInput.value = nineLine;
+            elements.messageInput.focus();
+        });
+    }
+    if (elements.loadProceduralToMsg) {
+        elements.loadProceduralToMsg.addEventListener('click', () => {
+            if (!radioState.currentScenario) {
+                alert('Primero genera un caso.');
+                return;
+            }
+            const msg = buildProceduralRadioFromScenario(radioState.currentScenario);
+            elements.messageInput.value = msg;
+            elements.messageInput.focus();
+        });
+    }
     
     // Cargar voces cuando estén disponibles
     if ('speechSynthesis' in window) {
@@ -198,6 +257,15 @@ function handleFrequencyInput(e) {
     }
     
     radioState.frequency = freq;
+    updateDisplay();
+}
+
+// Cambio de volumen
+function handleVolumeChange(e) {
+    radioState.volume = parseInt(e.target.value);
+    elements.volumeValue.textContent = radioState.volume;
+}
+
 // Cambio de Squelch
 function handleSquelchChange(e) {
     radioState.squelch = parseInt(e.target.value);
@@ -209,15 +277,6 @@ function handleSquelchChange(e) {
 function handleVoiceChange(e) {
     radioState.voiceGender = e.target.value;
     addToHistory('SISTEMA', `Voz del operador cambiada a ${e.target.value === 'male' ? 'masculina' : 'femenina'}`, 'system');
-}   radioState.volume = parseInt(e.target.value);
-    elements.volumeValue.textContent = radioState.volume;
-}
-
-// Cambio de Squelch
-function handleSquelchChange(e) {
-    radioState.squelch = parseInt(e.target.value);
-    elements.squelchValue.textContent = radioState.squelch;
-    updateSquelchLed();
 }
 
 // Manejar presets
@@ -420,7 +479,7 @@ function simulateResponse(userMessage) {
     elements.rxLed.classList.add('warning');
     
     // Reproducir respuesta con voz sintética distorsionada
-    speakRadioMessage(randomResponse);
+    speakRadioMessage(response);
     
     setTimeout(() => elements.rxLed.classList.remove('warning'), 2000);
 }
@@ -757,3 +816,132 @@ window.addEventListener('load', () => {
         }
     }, 500);
 });
+
+// =========================
+// Utilidades y Generadores
+// =========================
+
+function copyToClipboard(text) {
+    navigator.clipboard?.writeText(text).catch(() => {
+        // Fallback: crear textarea temporal
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    });
+}
+
+function buildNineLineTemplate() {
+    return (
+`L1: Ubicación punto de recogida: ____________\n` +
+`L2: Frecuencia / Indicativo: ____________\n` +
+`L3: Pacientes por precedencia (URG/PRI/RUT): ____/____/____\n` +
+`L4: Equipo especial (Ninguno/Guinche/Ventilador/Otro): ____________\n` +
+`L5: Pacientes por tipo (Camilla/Ambulatorio): ____/____\n` +
+`L6: Seguridad (Sin enemigo/Posible/Confirmado): ____________\n` +
+`L7: Señalización (Humo/Páneles/IR/Bengala): ____________\n` +
+`L8: Nacionalidad/Estado (Militar/Civil; Aliado): ____________\n` +
+`L9: Contaminación NBC (Ninguna/Q/B/R): ____________`);
+}
+
+function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateCoords() {
+    // Coordenadas sencillas simuladas (lat, lon)
+    const lat = (Math.random() * 1.0 + 4.0).toFixed(3);   // ~ Colombia 4.x
+    const lon = (-(Math.random() * 2.0 + 73.0)).toFixed(3); // ~ -75 a -73
+    return `Coordenadas ${lat}, ${lon}`;
+}
+
+function generateMedevacScenario() {
+    const precedences = ['URG', 'PRI', 'RUT'];
+    const specialEq = ['Ninguno', 'Guinche', 'Ventilador', 'Oxígeno'];
+    const security = ['Sin enemigo', 'Enemigo posible', 'Enemigo confirmado'];
+    const marking = ['Humo', 'Páneles', 'IR', 'Bengala'];
+    const nationality = ['Militar Aliado', 'Civil Aliado', 'Militar Neutral'];
+    const contamination = ['Ninguna', 'Q', 'B', 'R'];
+
+    const urg = Math.floor(Math.random() * 2); // 0-1
+    const pri = Math.floor(Math.random() * 3); // 0-2
+    const rut = Math.floor(Math.random() * 3); // 0-2
+    const lit = Math.max(1, Math.floor((urg + pri + rut) / 2));
+    const amb = Math.max(0, urg + pri + rut - lit);
+
+    const scenario = {
+        title: randomFrom([
+            'Contacto con IED', 'Accidente en inserción', 'Herida por arma ligera', 'Evacuación desde LZ caliente', 'Accidente de entrenamiento'
+        ]),
+        line1_location: randomFrom([
+            'LZ Bravo','LZ Sierra','Helipuerto Base Norte','Puesto Avanzado Alfa'
+        ]) + ' - ' + generateCoords(),
+        line2_freq_callsign: `${radioState.frequency.toFixed(3)} MHz / Indicativo: Helo Uno`,
+        line3_precedence: { URG: urg, PRI: pri, RUT: rut },
+        line4_equipment: randomFrom(specialEq),
+        line5_type: { Camilla: lit, Ambulatorio: amb },
+        line6_security: randomFrom(security),
+        line7_marking: randomFrom(marking),
+        line8_nationality: randomFrom(nationality),
+        line9_nbc: randomFrom(contamination),
+        notes: randomFrom([
+            'Hemorragia controlada, requiere traslado inmediato.',
+            'Paciente con TCE moderado, monitoreo de vía aérea.',
+            'Heridas por esquirlas, signos vitales estables.',
+            'Riesgo de contacto hostil, aproximación rápida.'
+        ])
+    };
+    return scenario;
+}
+
+function buildNineLineFromScenario(s) {
+    return (
+`L1: ${s.line1_location}\n` +
+`L2: ${s.line2_freq_callsign}\n` +
+`L3: URG ${s.line3_precedence.URG} / PRI ${s.line3_precedence.PRI} / RUT ${s.line3_precedence.RUT}\n` +
+`L4: ${s.line4_equipment}\n` +
+`L5: Camilla ${s.line5_type.Camilla} / Ambulatorio ${s.line5_type.Ambulatorio}\n` +
+`L6: ${s.line6_security}\n` +
+`L7: ${s.line7_marking}\n` +
+`L8: ${s.line8_nationality}\n` +
+`L9: ${s.line9_nbc}\n` +
+`Notas: ${s.notes}`);
+}
+
+function renderScenario(s) {
+    if (!elements.scenarioContainer) return;
+    elements.scenarioContainer.innerHTML = `
+        <div class="scenario-card">
+            <h4>${escapeHtml(s.title)}</h4>
+            <div class="scenario-grid">
+                <div><strong>L1</strong> ${escapeHtml(s.line1_location)}</div>
+                <div><strong>L2</strong> ${escapeHtml(s.line2_freq_callsign)}</div>
+                <div><strong>L3</strong> URG ${s.line3_precedence.URG} / PRI ${s.line3_precedence.PRI} / RUT ${s.line3_precedence.RUT}</div>
+                <div><strong>L4</strong> ${escapeHtml(s.line4_equipment)}</div>
+                <div><strong>L5</strong> Camilla ${s.line5_type.Camilla} / Ambulatorio ${s.line5_type.Ambulatorio}</div>
+                <div><strong>L6</strong> ${escapeHtml(s.line6_security)}</div>
+                <div><strong>L7</strong> ${escapeHtml(s.line7_marking)}</div>
+                <div><strong>L8</strong> ${escapeHtml(s.line8_nationality)}</div>
+                <div><strong>L9</strong> ${escapeHtml(s.line9_nbc)}</div>
+                <div><strong>Notas</strong> ${escapeHtml(s.notes)}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Construir mensaje procedimental breve para radio a partir del escenario
+function buildProceduralRadioFromScenario(s) {
+    const locShort = s.line1_location.split(' - ')[0];
+    const parts = [];
+    parts.push(`Base, aquí Helo Uno en ${locShort}.`);
+    parts.push(`Solicito MEDEVAC: URG ${s.line3_precedence.URG}, PRI ${s.line3_precedence.PRI}, RUT ${s.line3_precedence.RUT}.`);
+    parts.push(`Pacientes: Camilla ${s.line5_type.Camilla}, Ambulatorio ${s.line5_type.Ambulatorio}.`);
+    if (s.line4_equipment && s.line4_equipment !== 'Ninguno') {
+        parts.push(`Equipo requerido: ${s.line4_equipment}.`);
+    }
+    parts.push(`Señalización ${s.line7_marking}. Seguridad: ${s.line6_security}.`);
+    parts.push('Cambio.');
+    return parts.join(' ');
+}

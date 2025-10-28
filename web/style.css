@@ -70,7 +70,9 @@ body {
 /* Panels */
 .control-panel,
 .transmission-panel,
-.history-panel {
+.history-panel,
+.ops-panel,
+.scenario-panel {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     border: 2px solid var(--border-color);
     border-radius: 8px;
@@ -92,6 +94,14 @@ body {
 .history-panel {
     grid-column: 2;
     grid-row: 2;
+}
+
+.ops-panel {
+    margin-top: 20px;
+}
+
+.scenario-panel {
+    margin-top: 20px;
 }
 
 @media (max-width: 1024px) {
@@ -644,6 +654,75 @@ body {
     color: var(--accent-color);
     margin-top: 12px;
     margin-bottom: 8px;
+}
+
+/* Ops Panel */
+.ops-content {
+    margin-top: 10px;
+}
+
+.ops-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.ops-columns h4 {
+    color: var(--info-color);
+}
+
+.nine-line ol {
+    margin-left: 20px;
+}
+
+.nine-line-actions { margin-top: 10px; }
+
+.phonetic-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+
+.phonetic-grid span {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 0.9em;
+}
+
+/* Scenario Panel */
+.scenario-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.scenario-card h4 {
+    color: var(--accent-color);
+    margin-bottom: 10px;
+}
+
+.scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+}
+
+.scenario-grid > div {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 0.9em;
+}
+
+@media (max-width: 1024px) {
+    .ops-columns { grid-template-columns: 1fr; }
+    .phonetic-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    .scenario-grid { grid-template-columns: 1fr; }
 }
 
 .help-content ol,
