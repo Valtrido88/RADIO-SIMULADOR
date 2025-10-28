@@ -104,6 +104,17 @@ body {
     margin-top: 20px;
 }
 
+.role-selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+    .role-selectors { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 1024px) {
     .control-panel {
         grid-column: 1;

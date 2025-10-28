@@ -19,7 +19,10 @@ const radioState = {
     signalStrength: 0,
     voiceGender: 'male', // 'male' o 'female'
     useElevenLabs: false, // Se activa automáticamente si hay API key
-    isListening: false
+    isListening: false,
+    currentScenario: null,
+    emitterRole: 'Helo Uno',
+    receiverRole: 'Base'
 };
 
 // Referencias a elementos del DOM
@@ -57,7 +60,9 @@ const elements = {
     copyNineLine: document.getElementById('copyNineLine'),
     loadNineLineToMsg: document.getElementById('loadNineLineToMsg'),
     loadProceduralToMsg: document.getElementById('loadProceduralToMsg'),
-    scenarioContainer: document.getElementById('scenarioContainer')
+    scenarioContainer: document.getElementById('scenarioContainer'),
+    emitterRole: document.getElementById('emitterRole'),
+    receiverRole: document.getElementById('receiverRole')
 };
 
 // Inicialización
@@ -144,6 +149,19 @@ function setupEventListeners() {
             const scenario = generateMedevacScenario();
             radioState.currentScenario = scenario;
             renderScenario(scenario);
+        });
+    }
+    // Selectores de roles
+    if (elements.emitterRole) {
+        elements.emitterRole.addEventListener('change', (e) => {
+            radioState.emitterRole = e.target.value;
+            addToHistory('SISTEMA', `Emisor seleccionado: ${radioState.emitterRole}`, 'system');
+        });
+    }
+    if (elements.receiverRole) {
+        elements.receiverRole.addEventListener('change', (e) => {
+            radioState.receiverRole = e.target.value;
+            addToHistory('SISTEMA', `Receptor seleccionado: ${radioState.receiverRole}`, 'system');
         });
     }
     if (elements.copyNineLine) {
@@ -878,7 +896,7 @@ function generateMedevacScenario() {
         line1_location: randomFrom([
             'LZ Bravo','LZ Sierra','Helipuerto Base Norte','Puesto Avanzado Alfa'
         ]) + ' - ' + generateCoords(),
-        line2_freq_callsign: `${radioState.frequency.toFixed(3)} MHz / Indicativo: Helo Uno`,
+        line2_freq_callsign: `${radioState.frequency.toFixed(3)} MHz / Indicativo: ${radioState.emitterRole}`,
         line3_precedence: { URG: urg, PRI: pri, RUT: rut },
         line4_equipment: randomFrom(specialEq),
         line5_type: { Camilla: lit, Ambulatorio: amb },
@@ -886,6 +904,8 @@ function generateMedevacScenario() {
         line7_marking: randomFrom(marking),
         line8_nationality: randomFrom(nationality),
         line9_nbc: randomFrom(contamination),
+        emitterRole: radioState.emitterRole,
+        receiverRole: radioState.receiverRole,
         notes: randomFrom([
             'Hemorragia controlada, requiere traslado inmediato.',
             'Paciente con TCE moderado, monitoreo de vía aérea.',
@@ -916,6 +936,8 @@ function renderScenario(s) {
         <div class="scenario-card">
             <h4>${escapeHtml(s.title)}</h4>
             <div class="scenario-grid">
+                <div><strong>Emisor</strong> ${escapeHtml(s.emitterRole || 'Helo Uno')}</div>
+                <div><strong>Receptor</strong> ${escapeHtml(s.receiverRole || 'Base')}</div>
                 <div><strong>L1</strong> ${escapeHtml(s.line1_location)}</div>
                 <div><strong>L2</strong> ${escapeHtml(s.line2_freq_callsign)}</div>
                 <div><strong>L3</strong> URG ${s.line3_precedence.URG} / PRI ${s.line3_precedence.PRI} / RUT ${s.line3_precedence.RUT}</div>
@@ -935,7 +957,9 @@ function renderScenario(s) {
 function buildProceduralRadioFromScenario(s) {
     const locShort = s.line1_location.split(' - ')[0];
     const parts = [];
-    parts.push(`Base, aquí Helo Uno en ${locShort}.`);
+    const toWhom = s.receiverRole || 'Base';
+    const fromWho = s.emitterRole || 'Helo Uno';
+    parts.push(`${toWhom}, aquí ${fromWho} en ${locShort}.`);
     parts.push(`Solicito MEDEVAC: URG ${s.line3_precedence.URG}, PRI ${s.line3_precedence.PRI}, RUT ${s.line3_precedence.RUT}.`);
     parts.push(`Pacientes: Camilla ${s.line5_type.Camilla}, Ambulatorio ${s.line5_type.Ambulatorio}.`);
     if (s.line4_equipment && s.line4_equipment !== 'Ninguno') {
