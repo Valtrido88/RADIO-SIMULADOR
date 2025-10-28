@@ -47,6 +47,7 @@ const elements = {
     voiceSelect: document.getElementById('voiceSelect'),
     elevenLabsKey: document.getElementById('elevenLabsKey'),
     saveApiKey: document.getElementById('saveApiKey'),
+    testTTSButton: document.getElementById('testTTSButton'),
     apiKeyStatus: document.getElementById('apiKeyStatus'),
     signalMeter: document.getElementById('signalMeter'),
     rxLed: document.getElementById('rxLed'),
@@ -177,6 +178,13 @@ function setupEventListeners() {
     elements.squelchSlider.addEventListener('input', handleSquelchChange);
     elements.voiceSelect.addEventListener('change', handleVoiceChange);
     elements.saveApiKey.addEventListener('click', saveApiKey);
+    if (elements.testTTSButton) {
+        elements.testTTSButton.addEventListener('click', async () => {
+            const phrase = 'Base, prueba de sonido desde simulador MEDEVAC. ¿Me copian? Cambio.';
+            addToHistory('OPERADOR', '(Prueba TTS) ' + phrase, 'tx');
+            await speakRadioMessage(phrase);
+        });
+    }
     if (elements.saveGeminiKey) elements.saveGeminiKey.addEventListener('click', saveGeminiKey);
     elements.presetButtons.forEach(btn => {
         btn.addEventListener('click', handlePresetClick);
